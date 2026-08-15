@@ -169,7 +169,12 @@ void world_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
     // std::cout<<"got feature"<<endl;
     if (msg->header.stamp.toSec() < last_timestamp_ptcl) {
         ROS_ERROR("lidar pointcloud loop back, clear buffer");
+        // 三个buffer按下标一一对应，必须一起清空，否则点云和位姿会永久错位
         ptcl_buffer.clear();
+        time_buffer.clear();
+        mtx_buffer_odo.lock();
+        odo_buffer.clear();
+        mtx_buffer_odo.unlock();
     }
     // ROS_INFO("get point cloud at time: %.6f", msg->header.stamp.toSec());
     PointCloudXYZI::Ptr ptr(new PointCloudXYZI());
@@ -588,14 +593,19 @@ int main(int argc, char **argv) {
         auto total_start = std::chrono::high_resolution_clock::now();
 
         cout << "***Mesh Reconstruction*** points buffer size is " << ptcl_buffer.size() << endl;
+        // 回调函数在另一个线程里push，取数据同样要加锁
+        mtx_buffer_ptcl.lock();
         PointCloudXYZI::Ptr ptcl_frame = ptcl_buffer.front();
         frame_beg_time = time_buffer.front();
         frame_end_time = frame_beg_time + ptcl_frame->points.back().curvature / double(1000);
         time_buffer.pop_front();
         ptcl_buffer.pop_front();
+        mtx_buffer_ptcl.unlock();
 
+        mtx_buffer_odo.lock();
         nav_msgs::Odometry::Ptr odo_frame = odo_buffer.front();
         odo_buffer.pop_front();
+        mtx_buffer_odo.unlock();
         rot_q.x() = odo_frame->pose.pose.orientation.x;
         rot_q.y() = odo_frame->pose.pose.orientation.y;
         rot_q.z() = odo_frame->pose.pose.orientation.z;
@@ -619,10 +629,13 @@ int main(int argc, char **argv) {
         m_gui.g_current_frame = frame_idx;
 
 
+        // 点云和位姿由fastlio在同一次迭代中发布，时间戳完全相同，对齐时该值应为0。
+        // 阈值0.1正好是10Hz下错开一帧的间隔，取一半才能可靠地发现错位。
         double time_diff = std::abs( frame_beg_time - odo_frame->header.stamp.toSec());
-        if (time_diff >= 0.1)
+        if (time_diff >= 0.05)
         {
-            std::cout << "\033[31m Warning: time_diff is  \033[0m" << time_diff << std::endl;
+            std::cout << "\033[31m Warning: \033[0m point cloud and odometry are out of sync by "
+                      << time_diff << " s, the projection will be wrong" << std::endl;
         }
 
         // 保存点云数据, pcd格式
