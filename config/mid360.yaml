@@ -35,37 +35,41 @@ pcd_save:
     interval: -1                 # how many LiDAR frames saved in each pcd file;
     # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.
 
+# NOTE: keep this file pure ASCII. rosparam decodes it with the system locale,
+# so non-ASCII comments can be read as latin-1 and rejected as invalid YAML.
 mesh:
-    hole_every_n_frame: 5               # 每隔 n 帧一次hole_process
-    # 投影范围图参数。H = (up+down)/res + 2*r_kNN + 12, W = fov_horizon/res + 2*r_kNN + 12
-    # Mid-360 的标称视场是水平360度、垂直-7~+52度，但投影是在里程计body系下做的，
-    # 实际俯仰角会超出标称范围，因此上下都留了余量，越界的点会被直接丢弃形成空洞。
+    hole_every_n_frame: 5               # run hole filling and connection every n frames
+    # Range image size: H = (up+down)/res + 2*r_kNN + 12, W = fov_horizon/res + 2*r_kNN + 12
+    # The Mid-360 datasheet FOV is 360 deg horizontal, -7 to +52 deg vertical, but the
+    # projection happens in the odometry body frame, where pitch angles exceed that range.
+    # Extra vertical margin is deliberate: out-of-range points are dropped and leave holes.
     angle_resolution: 0.5               # -> H=292, W=742
     fov_horizon: 360
     fov_vertical_up: 55
     fov_vertical_down: 80
-    r_kNN: 5                            # 最近邻计算特征值的框的边长
-    depth_th_normal: 0.5                # 框内 点-中心点深度差 阈值
-    eigenvalue_threshold: 0.0001        # 确定初始平面点的阈值
-    angle_threshold: 10                 # 区域生长 角度相似性阈值 单位度
-    depth_threshold: 0.03               # 区域生长 平面点法向距离阈值 单位m
-    angle_th_spd: 10                    # 相似平面检测，法向角度阈值
-    dis_th_spd: 0.03                    # 相似平面检测，沿法向距离阈值
-    ptsNum_threshold: 40                # 平面点数量阈值
-    dis_resolution: 0.1                 # 平面划分网格的边长
-    grid_ptsNum_threshold: 4            # 确定网格为内部点的点数阈值
-    ptsNum_decimate_threshold: 1000     # 点投影矩阵是否重新计算
-    voxel_resolution: 0.2               # 非平面部分 体素边长
-    points_minimum_scale: 0.05          # 非平面部分 任意两个点之间最小距离
-    r_nonplane: 0.1                     # 非平面部分 最近邻查找距离阈值
-    N_nonplane: 10                      # 非平面部分 拟合三角形的点数阈值
-    max_pts_num: 15000                  # 原始点云数量整除该数进行降采样 TODO
+    r_kNN: 5                            # half width of the window used for normal estimation
+    depth_th_normal: 0.5                # max depth difference to the center point inside that window
+    eigenvalue_threshold: 0.0001        # threshold to seed an initial plane point
+    angle_threshold: 10                 # region growing, normal angle similarity, deg
+    depth_threshold: 0.03               # region growing, distance along the normal, m
+    angle_th_spd: 10                    # similar plane detection, normal angle threshold
+    dis_th_spd: 0.03                    # similar plane detection, distance along the normal
+    ptsNum_threshold: 40                # minimum number of points for a plane
+    dis_resolution: 0.1                 # size of plane grid
+    grid_ptsNum_threshold: 4            # threshold to define occupancy of plane grid
+    ptsNum_decimate_threshold: 1000     # whether the point projection matrix is recomputed
+    voxel_resolution: 0.2               # size of non-plane voxel
+    points_minimum_scale: 0.05          # minimum distance between any two non-plane points
+    r_nonplane: 0.1                     # nearest neighbor search distance in non-plane process
+    N_nonplane: 10                      # threshold to fit triangle of isolated points
+    max_pts_num: 15000
     if_save_raw_points: false
-    if_quadtree_decimate: true          # 是否进行四叉树简化
-    if_gui: true                        # 是否显示gui
+    if_quadtree_decimate: true          # carry out quadtree decimate or not
+    if_gui: true                        # display incremental reconstruction or not
     if_debug: false
     ptcl_topic: "/cloud_registered"
     odo_topic: "/Odometry"
-    # 必须改成本机已存在的目录，父目录不存在时节点会崩溃 (mkdir 不递归创建)
+    # Must point at a directory that already exists. mkdir here is not recursive and its
+    # result is unchecked, so a missing parent crashes the node on the first fopen.
     ptcl_save_path: "/home/YOUR_USER_NAME/output_onlinemesh"
     dataset_name: "mid360"
