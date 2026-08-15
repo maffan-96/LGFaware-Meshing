@@ -12,6 +12,8 @@
 #include <fstream>
 #include <stdio.h>
 #include <csignal>
+#include <cerrno>
+#include <cstring>
 //#include <Eigen/Core>
 //#include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -125,6 +127,35 @@ std::vector<int> new_plane_list;
 PointCloudXYZI::Ptr pts_list_rest = boost::make_shared<PointCloudXYZI>();
 
 /***  函数定义  ***/
+// 递归创建目录，mkdir本身不会创建父目录
+bool mkdir_recursive(const std::string &dir_path)
+{
+    if (dir_path.empty()) { return false; }
+
+    std::string cur_path;
+    for (size_t i = 0; i < dir_path.size(); i++)
+    {
+        cur_path += dir_path[i];
+        if (dir_path[i] != '/' && i + 1 != dir_path.size()) { continue; }
+        if (cur_path == "/") { continue; }
+        if (mkdir(cur_path.c_str(), 0777) != 0 && errno != EEXIST) { return false; }
+    }
+    return true;
+}
+
+// fopen失败时返回的空指针会让后续fprintf崩溃，这里直接报错退出
+FILE *fopen_or_exit(const std::string &file_path)
+{
+    FILE *fp = fopen(file_path.c_str(), "w");
+    if (fp == NULL)
+    {
+        std::cout << "\033[31m Error: \033[0m cannot open " << file_path << " for writing: "
+                  << strerror(errno) << ". Check mesh/ptcl_save_path." << std::endl;
+        exit(1);
+    }
+    return fp;
+}
+
 void SigHandle(int sig)
 {
     flg_exit = true;
@@ -455,7 +486,12 @@ int main(int argc, char **argv) {
     m_node.param<int>("mesh/hole_every_n_frame", hole_every_n_frame, 10);
 
     // 创建以系统当前时间命名的文件夹
-    mkdir(ptcl_save_path.c_str(), 0777);
+    if ( !mkdir_recursive(ptcl_save_path) )
+    {
+        std::cout << "\033[31m Error: \033[0m cannot create mesh/ptcl_save_path " << ptcl_save_path
+                  << ": " << strerror(errno) << std::endl;
+        exit(1);
+    }
 
     auto now = std::chrono::system_clock::now();
     std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
@@ -464,13 +500,18 @@ int main(int argc, char **argv) {
     ss << std::put_time(&now_tm, "%Y-%m-%d_%H-%M-%S");
     std::string file_name_str = ss.str();
     ptcl_save_path += "/" + dataset_name + "_" + file_name_str + "/";
-    mkdir(ptcl_save_path.c_str(), 0777);
+    if ( !mkdir_recursive(ptcl_save_path) )
+    {
+        std::cout << "\033[31m Error: \033[0m cannot create output folder " << ptcl_save_path
+                  << ": " << strerror(errno) << std::endl;
+        exit(1);
+    }
 
 
     // 读取所有参数并保存
     FILE *fp_ros_param;
     std::string all_ros_param_save_path = ptcl_save_path + "all_ros_param.txt";
-    fp_ros_param = fopen(all_ros_param_save_path.c_str(), "w");
+    fp_ros_param = fopen_or_exit(all_ros_param_save_path);
     // 获取当前系统时间点
     std::stringstream ss_;
     ss_ << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S");
@@ -524,7 +565,7 @@ int main(int argc, char **argv) {
     non_plane_map->minimum_pt_dis = min_pt_dis;
 
     string log_save_path3 = ptcl_save_path + "log_time.txt";
-    fpTime = fopen(log_save_path3.c_str(), "w");
+    fpTime = fopen_or_exit(log_save_path3);
 
     // 打开GUI界面，放在if判断中会报错
     std::thread thr_gui = std::thread( &GL_gui::display, &m_gui );
