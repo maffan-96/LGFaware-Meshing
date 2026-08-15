@@ -66,5 +66,6 @@ mesh:
     if_debug: false
     ptcl_topic: "/cloud_registered"
     odo_topic: "/Odometry"
-    ptcl_save_path: "/home/neo/output_onlinemesh"
+    # 必须改成本机已存在的目录，父目录不存在时节点会崩溃 (mkdir 不递归创建)
+    ptcl_save_path: "/home/YOUR_USER_NAME/output_onlinemesh"
     dataset_name: "mid360"
