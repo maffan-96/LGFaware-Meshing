@@ -598,6 +598,10 @@ int main(int argc, char **argv) {
         Tensor<double, 3> projectImage(H, W, 11);  // x y z xx xy xz yy yz zz N intensity
         projectImage.setConstant(0.0f);
 
+        // 投影越界统计，每帧汇总输出一次，避免逐点打印
+        int project_fail_num = 0;
+        double alphi_max = -180.0, alphi_min = 180.0;   // 本帧点的俯仰角范围，单位度
+
         // 世界坐标系 -> 体坐标系
         Eigen::MatrixXd frame_world_pt_eigen(ptcl_size, 3);
         Eigen::MatrixXd frame_body_pt_eigen(ptcl_size, 3);
@@ -631,9 +635,15 @@ int main(int argc, char **argv) {
             u = int(angle_sign * point_theti / angle_resolution) + W / 2;
             v = int(-1.0 * point_alphi / angle_resolution) + H_up;
 
+            if (std::isfinite(point_alphi))
+            {
+                if (point_alphi > alphi_max) { alphi_max = point_alphi; }
+                if (point_alphi < alphi_min) { alphi_min = point_alphi; }
+            }
+
             if ( u<0 || u>=W || v<0 || v>=H)
             {
-                cout << "\033[31m project error! \033[0m" << H << " " << W << " " << u << " " << v << endl;   // 输出红色字体
+                project_fail_num++;
                 continue;
             }
 
@@ -658,6 +668,16 @@ int main(int argc, char **argv) {
                     projectImage(v, u, 9) = 1;
                 }
             }
+        }
+
+        // 越界点被丢弃会造成网格空洞，提示需要的fov参数
+        if ( project_fail_num > 0 )
+        {
+            cout << "\033[31m project error! \033[0m" << project_fail_num << "/" << ptcl_size
+                 << " points fall outside the " << H << "x" << W << " range image. "
+                 << "Pitch angle of this frame is [" << alphi_min << ", " << alphi_max << "] deg, "
+                 << "need mesh/fov_vertical_up >= " << std::max(0.0, alphi_max)
+                 << " and mesh/fov_vertical_down >= " << std::max(0.0, -alphi_min) << endl;
         }
 
         auto end_1 = std::chrono::high_resolution_clock::now();
