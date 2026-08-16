@@ -41,12 +41,12 @@ mesh:
     hole_every_n_frame: 5               # run hole filling and connection every n frames
     # Range image size: H = (up+down)/res + 2*r_kNN + 12, W = fov_horizon/res + 2*r_kNN + 12
     # The Mid-360 datasheet FOV is 360 deg horizontal, -7 to +52 deg vertical, but the
-    # projection happens in the odometry body frame, where pitch angles exceed that range.
-    # Extra vertical margin is deliberate: out-of-range points are dropped and leave holes.
-    angle_resolution: 0.5               # -> H=292, W=742
+    # projection happens in the odometry body frame, where measured pitch reaches +-89 deg.
+    # 90/90 covers the full range atan() can return, so no point is ever dropped.
+    angle_resolution: 0.5               # -> H=382, W=742
     fov_horizon: 360
-    fov_vertical_up: 55
-    fov_vertical_down: 80
+    fov_vertical_up: 90
+    fov_vertical_down: 90
     r_kNN: 5                            # half width of the window used for normal estimation
     depth_th_normal: 0.5                # max depth difference to the center point inside that window
     eigenvalue_threshold: 0.0001        # threshold to seed an initial plane point
