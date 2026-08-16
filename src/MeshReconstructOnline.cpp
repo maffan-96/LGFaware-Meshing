@@ -26,6 +26,7 @@
 // pcl
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/console/print.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -451,6 +452,9 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "MeshReconstructOnline");
     ros::NodeHandle m_node;
 
+    // 订阅的点云可能只有xyzi字段，fromROSMsg会为缺失的normal/curvature逐帧刷警告
+    pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
+
     // common params
     m_node.param<string>("mesh/ptcl_topic", ptcl_topic, "/cloud_registered");
     m_node.param<string>("mesh/odo_topic", odo_topic, "/Odometry");
@@ -590,6 +594,37 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        // 点云和位姿按时间戳配对。两个话题的连接不是同时建立的，开头少收到几条
+        // 消息就会让按下标的配对永久错开一帧，投影使用的位姿也就一直是错的。
+        const double sync_eps = 0.01;
+        mtx_buffer_ptcl.lock();
+        double cur_ptcl_time = time_buffer.front();
+        mtx_buffer_ptcl.unlock();
+
+        mtx_buffer_odo.lock();
+        while ( !odo_buffer.empty() && odo_buffer.front()->header.stamp.toSec() < cur_ptcl_time - sync_eps )
+        {
+            odo_buffer.pop_front();     // 比当前点云更旧的位姿，配不上任何一帧
+        }
+        bool odo_matched = !odo_buffer.empty() &&
+                           std::abs( odo_buffer.front()->header.stamp.toSec() - cur_ptcl_time ) <= sync_eps;
+        bool odo_is_newer = !odo_buffer.empty() && !odo_matched;
+        mtx_buffer_odo.unlock();
+
+        if ( !odo_matched )
+        {
+            if ( odo_is_newer )
+            {
+                // 这帧点云的位姿已经错过了，丢掉点云而不是配一个错的位姿
+                mtx_buffer_ptcl.lock();
+                time_buffer.pop_front();
+                ptcl_buffer.pop_front();
+                mtx_buffer_ptcl.unlock();
+                std::cout << "\033[31m Warning: \033[0m no odometry for this point cloud, skip it" << std::endl;
+            }
+            continue;                   // 位姿还没到，下一轮再试
+        }
+
         auto total_start = std::chrono::high_resolution_clock::now();
 
         cout << "***Mesh Reconstruction*** points buffer size is " << ptcl_buffer.size() << endl;
@@ -608,7 +643,7 @@ int main(int argc, char **argv) {
 
         if ( ptcl_frame->points.empty() )
         {
-            // 点云和位姿按下标配对，丢帧时必须同时丢掉对应的位姿
+            // 丢帧时必须把已经配对上的位姿一起丢掉
             mtx_buffer_odo.lock();
             odo_buffer.pop_front();
             mtx_buffer_odo.unlock();
