@@ -1,0 +1,24 @@
+<launch>
+  <!-- Meshing node only, for use with Super-LIO started from its own workspace
+       in a separate terminal:
+
+         Terminal 1:  source $SuperLIO$/devel/setup.bash
+                      roslaunch super_lio Livox_mid360.launch rviz:=false
+         Terminal 2:  source $meshing_ws$/devel/setup.bash
+                      roslaunch online_mesh meshing_only_superlio.launch
+         Terminal 3:  rosbag play -r 0.4 your_bag.bag
+
+       Use mapping_mid360_superlio.launch instead when both workspaces are
+       chained and $(find super_lio) resolves from this one. -->
+
+    <arg name="rviz" default="false" />
+
+    <rosparam command="load" file="$(find online_mesh)/config/mid360_superlio.yaml" />
+
+    <node pkg="online_mesh" type="my_mesh" name="my_mesh" output="screen"/>
+
+    <group if="$(arg rviz)">
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find online_mesh)/rviz_cfg/my_lio.rviz" />
+    </group>
+
+</launch>
