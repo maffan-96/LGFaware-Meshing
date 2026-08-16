@@ -1467,7 +1467,7 @@ bool MeshFragment::save_to_ply_without_redundancy(const std::string &fileName)
 
     std::set<int> vertex_exist_single;
     std::unordered_map<int, int> vertex_idx_old2new;
-    PointCloudXYZ::Ptr ptcl_processed = boost::make_shared<PointCloudXYZ>();
+    PointCloudXYZ::Ptr ptcl_processed = std::make_shared<PointCloudXYZ>();
 
     for (auto it : face_exist)
     {

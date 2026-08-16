@@ -30,6 +30,7 @@
 #include <CGAL/convex_hull_2.h>
 #include <CGAL/Convex_hull_traits_adapter_2.h>
 // 自定义
+#include <memory>
 #include "DataType.h"
 #include "hash_idx.hpp"
 //#include "iostream"
@@ -78,7 +79,7 @@ public:
 
     NonPlaneMesh()
     {
-        pts_list = boost::make_shared<PointCloudXYZI>();
+        pts_list = std::make_shared<PointCloudXYZI>();
     };
 
     ~NonPlaneMesh() {};

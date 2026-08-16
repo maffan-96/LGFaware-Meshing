@@ -124,7 +124,7 @@ std::vector<std::shared_ptr<MeshFragment>> plane_map;         // 各不相同的
 int all_plane_num = 1;
 std::shared_ptr<NonPlaneMesh> non_plane_map = std::make_shared<NonPlaneMesh>();
 std::vector<int> new_plane_list;
-PointCloudXYZI::Ptr pts_list_rest = boost::make_shared<PointCloudXYZI>();
+PointCloudXYZI::Ptr pts_list_rest = std::make_shared<PointCloudXYZI>();
 
 /***  函数定义  ***/
 // 递归创建目录，mkdir本身不会创建父目录

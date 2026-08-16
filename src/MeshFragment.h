@@ -17,6 +17,7 @@
 #include <pcl/io/ply_io.h>
 #include <pcl/PolygonMesh.h>
 //
+#include <memory>
 #include "DataType.h"
 #include "unordered_map"
 #include "QuadTree.hpp"
@@ -83,8 +84,8 @@ public:
     MeshFragment()
     {
         // 初始化
-        ptcl_all = boost::make_shared<PointCloudXYZI>();
-        ptcl_grid = boost::make_shared<PointCloudXYZI>();
+        ptcl_all = std::make_shared<PointCloudXYZI>();
+        ptcl_grid = std::make_shared<PointCloudXYZI>();
     };
     ~MeshFragment() {};
 
