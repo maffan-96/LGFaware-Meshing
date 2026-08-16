@@ -597,10 +597,24 @@ int main(int argc, char **argv) {
         mtx_buffer_ptcl.lock();
         PointCloudXYZI::Ptr ptcl_frame = ptcl_buffer.front();
         frame_beg_time = time_buffer.front();
-        frame_end_time = frame_beg_time + ptcl_frame->points.back().curvature / double(1000);
+        // 空点云上调用back()是未定义行为，不同前端可能发布空帧
+        if ( !ptcl_frame->points.empty() )
+        {
+            frame_end_time = frame_beg_time + ptcl_frame->points.back().curvature / double(1000);
+        }
         time_buffer.pop_front();
         ptcl_buffer.pop_front();
         mtx_buffer_ptcl.unlock();
+
+        if ( ptcl_frame->points.empty() )
+        {
+            // 点云和位姿按下标配对，丢帧时必须同时丢掉对应的位姿
+            mtx_buffer_odo.lock();
+            odo_buffer.pop_front();
+            mtx_buffer_odo.unlock();
+            std::cout << "\033[31m Warning: \033[0m empty point cloud, skip this frame" << std::endl;
+            continue;
+        }
 
         mtx_buffer_odo.lock();
         nav_msgs::Odometry::Ptr odo_frame = odo_buffer.front();

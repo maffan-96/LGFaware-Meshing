@@ -1,0 +1,22 @@
+<launch>
+  <!-- Livox Mid-360 with the Super-LIO odometry front-end.
+       Requires the super_lio workspace to be sourced so that $(find super_lio)
+       resolves, e.g. source $SuperLIO_ws$/devel/setup.bash before roslaunch. -->
+
+    <arg name="rviz" default="false" />
+
+    <!-- Super-LIO parameters, loaded under the lio/ namespace -->
+    <rosparam command="load" file="$(find super_lio)/config/livox_360.yaml" />
+
+    <!-- Meshing parameters, loaded under the mesh/ namespace -->
+    <rosparam command="load" file="$(find online_mesh)/config/mid360_superlio.yaml" />
+
+    <node pkg="super_lio" type="super_lio_node" name="super_lio_node" output="screen"/>
+
+    <node pkg="online_mesh" type="my_mesh" name="my_mesh" output="screen"/>
+
+    <group if="$(arg rviz)">
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find online_mesh)/rviz_cfg/my_lio.rviz" />
+    </group>
+
+</launch>
