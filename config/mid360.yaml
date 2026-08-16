@@ -71,5 +71,5 @@ mesh:
     odo_topic: "/Odometry"
     # Must point at a directory that already exists. mkdir here is not recursive and its
     # result is unchecked, so a missing parent crashes the node on the first fopen.
-    ptcl_save_path: "/home/YOUR_USER_NAME/output_onlinemesh"
+    ptcl_save_path: "/indoormapping/data/ITC_building_2026/output_onlinemesh/"
     dataset_name: "mid360"
