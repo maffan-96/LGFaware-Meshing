@@ -1,0 +1,34 @@
+<launch>
+  <!-- Voxblox TSDF baseline fed by a LIO front-end through odom_cloud_relay.py.
+       Defaults are the FAST-LIO topics; for Super-LIO launch with
+         cloud_topic:=/lio/cloud_world odom_topic:=/lio/odom cloud_in_world_frame:=true
+       Mesh: rosservice call /voxblox_node/generate_mesh  (writes mesh_filename) -->
+
+  <arg name="cloud_topic" default="/cloud_registered_body" />
+  <arg name="odom_topic" default="/Odometry" />
+  <arg name="cloud_in_world_frame" default="false" />
+  <arg name="voxel_size" default="0.1" />
+  <arg name="mesh_filename" default="$(env HOME)/mesh_voxblox.ply" />
+
+  <node pkg="online_mesh" type="odom_cloud_relay.py" name="relay" output="screen">
+    <param name="cloud_topic" value="$(arg cloud_topic)" />
+    <param name="odom_topic" value="$(arg odom_topic)" />
+    <param name="cloud_in_world_frame" value="$(arg cloud_in_world_frame)" />
+    <param name="world_frame" value="world" />
+  </node>
+
+  <node pkg="voxblox_ros" type="tsdf_server" name="voxblox_node" output="screen">
+    <remap from="pointcloud" to="/relay/cloud_out" />
+    <remap from="transform" to="/relay/transform_out" />
+    <param name="use_tf_transforms" value="false" />
+    <param name="world_frame" value="world" />
+    <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
+    <param name="truncation_distance" value="0.3" />
+    <param name="max_ray_length_m" value="60.0" />
+    <param name="method" value="fast" />
+    <param name="update_mesh_every_n_sec" value="0.0" />
+    <param name="mesh_filename" value="$(arg mesh_filename)" />
+    <param name="pointcloud_queue_size" value="40" />
+    <param name="verbose" value="false" />
+  </node>
+</launch>
