@@ -1,0 +1,32 @@
+<launch>
+  <!-- Voxblox TSDF server for the offline Super-LIO PCD+pose dataset, fed by
+       voxblox_pcd_publisher.py. Comparable defaults to the vdbfusion / qem runs:
+       voxel 0.1 m, truncation 0.3 m.
+
+         roslaunch online_mesh voxblox_superlio.launch \
+             voxel_size:=0.1 mesh_filename:=$HOME/mesh_voxblox_itc_stairs.ply
+         python3 eval_baselines/voxblox_pcd_publisher.py --pcd_folder ... --pose_file ...
+         (mesh is written when the publisher calls /voxblox_node/generate_mesh) -->
+
+  <arg name="voxel_size" default="0.1" />
+  <arg name="truncation_distance" default="0.3" />
+  <arg name="max_ray_length_m" default="60.0" />
+  <arg name="mesh_filename" default="$(env HOME)/mesh_voxblox.ply" />
+  <arg name="method" default="merged" />
+
+  <node pkg="voxblox_ros" type="tsdf_server" name="voxblox_node" output="screen">
+    <remap from="pointcloud" to="/voxblox_input/pointcloud" />
+    <remap from="transform" to="/voxblox_input/transform" />
+    <param name="use_tf_transforms" value="false" />
+    <param name="world_frame" value="world" />
+    <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
+    <param name="truncation_distance" value="$(arg truncation_distance)" />
+    <param name="min_ray_length_m" value="0.1" />
+    <param name="max_ray_length_m" value="$(arg max_ray_length_m)" />
+    <param name="method" value="$(arg method)" />
+    <param name="update_mesh_every_n_sec" value="0.0" />
+    <param name="mesh_filename" value="$(arg mesh_filename)" />
+    <param name="pointcloud_queue_size" value="200" />
+    <param name="verbose" value="false" />
+  </node>
+</launch>
