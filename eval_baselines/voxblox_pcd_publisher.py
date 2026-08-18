@@ -130,10 +130,23 @@ def main():
         cloud = pc2.create_cloud_xyz32(header, pts)
 
         pub_tf.publish(tf)      # transform first so voxblox can match the cloud stamp
+        rospy.sleep(0.03)       # cross-topic delivery order is not guaranteed; give
+                                # the transform a head start so voxblox has it queued
         pub_cloud.publish(cloud)
         if i % 25 == 0 or i == len(dataset) - 1:
             print(f"  [{i + 1}/{len(dataset)}] {os.path.basename(pcd_path)}  pts={len(pts)}")
         rate.sleep()
+
+    # voxblox only retries queued clouds when another cloud arrives, so if the
+    # final scan hit the cloud-before-transform race it would stay stuck in the
+    # queue. Publish one empty flush cloud (with its own matching transform,
+    # reusing the last pose) to trigger that retry; integrating it is a no-op.
+    stamp = rospy.Time.now()
+    tf.header.stamp = stamp
+    pub_tf.publish(tf)
+    rospy.sleep(0.05)
+    pub_cloud.publish(pc2.create_cloud_xyz32(
+        Header(stamp=stamp, frame_id=args.sensor_frame), []))
 
     # Let voxblox drain its queue before asking for the mesh.
     print("All scans published; waiting 5 s for voxblox to finish integrating ...")
