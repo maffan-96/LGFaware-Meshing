@@ -3,10 +3,11 @@
        voxblox_pcd_publisher.py. Comparable defaults to the vdbfusion / qem runs:
        voxel 0.1 m, truncation 0.3 m.
 
-         roslaunch online_mesh voxblox_superlio.launch \
+         roslaunch voxblox_ros voxblox_superlio.launch \
              voxel_size:=0.1 mesh_filename:=$HOME/mesh_voxblox_itc_stairs.ply
-         python3 eval_baselines/voxblox_pcd_publisher.py --pcd_folder ... --pose_file ...
-         (mesh is written when the publisher calls /voxblox_node/generate_mesh) -->
+         python3 voxblox_pcd_publisher.py with the pcd_folder and pose_file options
+         (mesh is written when the publisher calls /voxblox_node/generate_mesh)
+       Note: XML comments must not contain double hyphens, so no flag syntax here. -->
 
   <arg name="voxel_size" default="0.1" />
   <arg name="truncation_distance" default="0.3" />
