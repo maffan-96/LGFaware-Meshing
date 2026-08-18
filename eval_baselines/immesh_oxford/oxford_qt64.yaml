@@ -1,0 +1,96 @@
+# ImMesh config for the Oxford Spires dataset (Frontier handheld:
+# Hesai QT64 @10 Hz + Alphasense Core IMU @400 Hz).
+# Copy into $ImMesh$/config/ and launch with mapping_oxford_qt64.launch.
+#
+# Derived from ImMesh's config/velodyne.yaml with:
+#   - topics from the Oxford Spires rosbags (/hesai/pandar, /alphasense_driver_ros/imu)
+#   - IMU enabled, with T_imu_lidar computed from the dataset's
+#     configs/sensor.yaml (T_cam_imu^-1 * T_cam_lidar of the front camera):
+#     ~91 deg yaw between LiDAR and IMU + [0.65, -15.5, 84.6] mm offset.
+#   - QT64 geometry: 64-line spinning lidar, 360 deg FOV.
+#
+# Note on per-point time: the Hesai driver stamps points in a field named
+# "timestamp" (absolute, double); ImMesh's velodyne handler looks for
+# "time" (relative, float). The missing field decays to zeros, and the
+# handler then falls back to computing per-point offsets from the azimuth,
+# which is correct for a constant-rate spinning lidar. Expect a one-time
+# PCL "Failed to find match for field 'time'" warning - harmless.
+
+feature_extract_enable: 0
+point_filter_num: 1
+max_iteration: 3
+dense_map_enable: 0
+filter_size_surf: 0.5
+filter_size_map: 0.5
+cube_side_length: 1000
+debug: 0
+min_img_count: 150000
+
+grid_size: 40
+patch_size: 8
+img_enable: 0
+lidar_enable: 1
+outlier_threshold: 78
+img_point_cov: 1000
+laser_point_cov: 0.001
+
+common:
+    lid_topic: "/hesai/pandar"
+    imu_topic: "/alphasense_driver_ros/imu"
+
+preprocess:
+    lidar_type: 2                # spinning-lidar (velodyne-style) handler
+    scan_line: 64                # QT64: 64 channels
+    blind: 0.5                   # QT64 min range ~0.1 m; 0.5 kills near returns off the operator
+    calib_laser: false           # KITTI/NCLT vertical-angle correction - not applicable to Hesai
+
+mapping:
+    imu_en: true
+    imu_int_frame: 30
+    acc_cov: 0.1
+    gyr_cov: 0.1
+    fov_degree: 360
+    # T_imu_lidar from oxford_spires configs/sensor.yaml (see header)
+    extrinsic_T: [ -0.00065, -0.01550, 0.08463 ]
+    extrinsic_R: [ -0.016650, -0.999860,  0.001703,
+                    0.999855, -0.016644,  0.003582,
+                   -0.003553,  0.001763,  0.999992 ]
+
+voxel:
+    voxel_map_en: true
+    pub_plane_en: false
+    dept_err: 0.04
+    beam_err: 0.1
+    min_eigen_value: 0.01
+    match_s: 0.9
+    sigma_num: 3
+    voxel_size: 3
+    max_layer: 4
+    max_points_size: 1000
+    layer_init_size: [5, 5, 5, 5, 5]
+
+publish:
+    path_en: false
+    scan_publish_en: true
+    dense_publish_en: false
+    scan_bodyframe_pub_en: false
+    effect_point_pub: true
+    pub_point_skip: 5
+
+pcd_save:
+    pcd_save_en: false
+    type: 0
+    interval: -1
+
+img_save:
+    img_save_en: false
+    rot_dist: 0.0
+    pos_dist: 0.0
+    interval: 1
+
+meshing:
+    points_minimum_scale: 0.1
+    voxel_resolution: 0.4
+    region_size: 10.0
+    number_of_pts_append_to_map: 10000
+    if_draw_mesh: 1

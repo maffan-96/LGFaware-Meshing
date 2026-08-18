@@ -1,0 +1,26 @@
+<launch>
+  <!-- ImMesh on the Oxford Spires rosbags (Hesai QT64 + Alphasense IMU).
+       Copy this file into $ImMesh$/launch/ and oxford_qt64.yaml into
+       $ImMesh$/config/, then:
+
+         Terminal 1:  roslaunch ImMesh mapping_oxford_qt64.launch
+         Terminal 2:  rosbag play -r 0.5 <oxford_spires_seq3>.bag
+
+       Save the mesh from the ImMesh GUI when the bag finishes
+       (same workflow as your ITC run: rec_mesh.ply). -->
+
+    <arg name="rviz" default="0" />
+
+    <rosparam command="load" file="$(find ImMesh)/config/oxford_qt64.yaml" />
+
+    <param name="meshing/distance_scale" type="double" value="1.5" />
+    <param name="gui_font_size" type="int" value="20" />
+
+    <node pkg="ImMesh" type="ImMesh_mapping" name="laserMapping" output="screen" />
+
+    <group if="$(arg rviz)">
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz"
+              args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
+    </group>
+
+</launch>
