@@ -13,7 +13,7 @@
 
     <rosparam command="load" file="$(find ImMesh)/config/oxford_qt64.yaml" />
 
-    <param name="meshing/distance_scale" type="double" value="1.5" />
+    <param name="meshing/distance_scale" type="double" value="1.0" />
     <param name="gui_font_size" type="int" value="20" />
 
     <node pkg="ImMesh" type="ImMesh_mapping" name="laserMapping" output="screen" />

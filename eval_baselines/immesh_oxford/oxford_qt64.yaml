@@ -39,22 +39,26 @@ common:
     imu_topic: "/alphasense_driver_ros/imu"
 
 preprocess:
-    lidar_type: 2                # spinning-lidar (velodyne-style) handler
+    lidar_type: 5                # XT32 = Hesai Pandar handler (present in stock ImMesh);
+                                 # parses the QT64's absolute double timestamp + ring fields
     scan_line: 64                # QT64: 64 channels
-    blind: 0.5                   # QT64 min range ~0.1 m; 0.5 kills near returns off the operator
-    calib_laser: false           # KITTI/NCLT vertical-angle correction - not applicable to Hesai
+    blind: 1.0                   # per ori-drs/ImMesh_hesai hesai_ox.yaml
 
 mapping:
     imu_en: true
     imu_int_frame: 30
-    acc_cov: 0.1
-    gyr_cov: 0.1
-    fov_degree: 360
-    # T_imu_lidar from oxford_spires configs/sensor.yaml (see header)
-    extrinsic_T: [ -0.00065, -0.01550, 0.08463 ]
-    extrinsic_R: [ -0.016650, -0.999860,  0.001703,
-                    0.999855, -0.016644,  0.003582,
-                   -0.003553,  0.001763,  0.999992 ]
+    # IMU noise + extrinsics below are the ORI group's own values from
+    # ori-drs/ImMesh_hesai config/hesai_ox.yaml (calibrated for the
+    # Frontier handheld used in New College / Oxford Spires).
+    acc_cov: 5.0
+    gyr_cov: 0.3
+    b_acc_cov: 0.01
+    b_gyr_cov: 0.01
+    fov_degree: 180
+    extrinsic_T: [ -0.00459163, -0.00200303, -0.0547992 ]
+    extrinsic_R: [ -0.0106465,  -0.999911,   0.00806769,
+                    0.999941,   -0.0106296,  0.00171369,
+                   -0.00166849,  0.00808546, 0.999966 ]
 
 voxel:
     voxel_map_en: true
