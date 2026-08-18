@@ -11,7 +11,7 @@
   <arg name="voxel_size" default="0.1" />
   <arg name="truncation_distance" default="0.3" />
   <arg name="max_ray_length_m" default="60.0" />
-  <arg name="mesh_filename" default="$(env HOME)/mesh_voxblox.ply" />
+  <arg name="mesh_filename" default="/home/affanm/planar_mesh/planar_mesh/cpp_implementation/meshes/mesh_voxblox.ply" />
   <arg name="method" default="merged" />
 
   <node pkg="voxblox_ros" type="tsdf_server" name="voxblox_node" output="screen">
