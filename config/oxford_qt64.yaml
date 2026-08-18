@@ -1,0 +1,48 @@
+# Meshing parameters for the Oxford Spires dataset (Hesai PandarQT / QT64),
+# fed OFFLINE by eval_baselines/lgfaware_pcd_publisher.py from the VILENS
+# undistorted PCDs + slam-poses.csv. The feeder publishes world-frame clouds
+# on /lio/cloud_world and matching odometry on /lio/odom, so the Super-LIO
+# topic wiring is reused unchanged.
+#
+# Hesai QT64: 360 deg horizontal, vertical FOV -52.1..+52.1 deg (64 beams,
+# ~1.45 deg vertical spacing), 0.6 deg horizontal resolution.
+#
+# NOTE: keep this file pure ASCII. rosparam decodes it with the system locale,
+# so non-ASCII comments can be read as latin-1 and rejected as invalid YAML.
+mesh:
+    hole_every_n_frame: 5               # run hole filling and connection every n frames
+    # Range image size: H = (up+down)/res + 2*r_kNN + 12, W = fov_horizon/res + 2*r_kNN + 12
+    # 53/53 covers the QT64's +-52.1 deg vertical FOV with margin -> no point dropped,
+    # and the image stays much smaller than the lossless 90/90 setting.
+    angle_resolution: 0.5               # -> H=234, W=742
+    fov_horizon: 360
+    fov_vertical_up: 53
+    fov_vertical_down: 53
+    r_kNN: 5                            # half width of the window used for normal estimation
+                                        # (+-2.5 deg: spans the ~1.45 deg gap between QT64 beams)
+    depth_th_normal: 0.5                # max depth difference to the center point inside that window
+    eigenvalue_threshold: 0.0001        # threshold to seed an initial plane point
+    angle_threshold: 10                 # region growing, normal angle similarity, deg
+    depth_threshold: 0.03               # region growing, distance along the normal, m
+    angle_th_spd: 10                    # similar plane detection, normal angle threshold
+    dis_th_spd: 0.03                    # similar plane detection, distance along the normal
+    ptsNum_threshold: 40                # minimum number of points for a plane
+    dis_resolution: 0.1                 # size of plane grid
+    grid_ptsNum_threshold: 4            # threshold to define occupancy of plane grid
+    ptsNum_decimate_threshold: 1000     # whether the point projection matrix is recomputed
+    voxel_resolution: 0.2               # size of non-plane voxel
+    points_minimum_scale: 0.05          # minimum distance between any two non-plane points
+    r_nonplane: 0.1                     # nearest neighbor search distance in non-plane process
+    N_nonplane: 10                      # threshold to fit triangle of isolated points
+    max_pts_num: 15000
+    if_save_raw_points: false
+    if_quadtree_decimate: true          # carry out quadtree decimate or not
+    if_gui: false                       # display incremental reconstruction or not
+    if_debug: false
+    # Topics published by lgfaware_pcd_publisher.py (same names as Super-LIO).
+    ptcl_topic: "/lio/cloud_world"
+    odo_topic: "/lio/odom"
+    # Must point at a directory that already exists (the node creates the
+    # dataset_name_<time> subfolder itself).
+    ptcl_save_path: "/indoormapping/oxford_spires/keble-college/output_onlinemesh/"
+    dataset_name: "oxford_kc03"
