@@ -4,7 +4,7 @@
 
          Terminal 1:  source $meshing_ws$/devel/setup.bash
                       roslaunch online_mesh meshing_only_oxford_qt64.launch \
-                          save_path:=/indoormapping/oxford_spires/christ-curch-college/output_onlinemesh/ \
+                          save_path:=/home/affanm/planar_mesh/planar_mesh/cpp_implementation/meshes/output_onlinemesh/ \
                           dataset_name:=oxford_cc03
          Terminal 2:  python3 lgfaware_pcd_publisher.py
                           with the pcd_folder / pose_file / rate options
@@ -16,7 +16,7 @@
        (p.ply / np.ply / all.ply under save_path/dataset_name_<time>/). -->
 
     <arg name="rviz" default="false" />
-    <arg name="save_path" default="/indoormapping/oxford_spires/keble-college/output_onlinemesh/" />
+    <arg name="save_path" default="/home/affanm/planar_mesh/planar_mesh/cpp_implementation/meshes/output_onlinemesh/" />
     <arg name="dataset_name" default="oxford_kc03" />
 
     <rosparam command="load" file="$(find online_mesh)/config/oxford_qt64.yaml" />

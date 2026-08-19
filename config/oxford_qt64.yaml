@@ -44,5 +44,5 @@ mesh:
     odo_topic: "/lio/odom"
     # Must point at a directory that already exists (the node creates the
     # dataset_name_<time> subfolder itself).
-    ptcl_save_path: "/indoormapping/oxford_spires/keble-college/output_onlinemesh/"
+    ptcl_save_path: "/home/affanm/planar_mesh/planar_mesh/cpp_implementation/meshes/output_onlinemesh/"
     dataset_name: "oxford_kc03"
