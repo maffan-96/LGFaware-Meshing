@@ -3,16 +3,25 @@
        Feed it with eval_baselines/lgfaware_pcd_publisher.py:
 
          Terminal 1:  source $meshing_ws$/devel/setup.bash
-                      roslaunch online_mesh meshing_only_oxford_qt64.launch
+                      roslaunch online_mesh meshing_only_oxford_qt64.launch \
+                          save_path:=/indoormapping/oxford_spires/christ-curch-college/output_onlinemesh/ \
+                          dataset_name:=oxford_cc03
          Terminal 2:  python3 lgfaware_pcd_publisher.py
                           with the pcd_folder / pose_file / rate options
 
+       save_path and dataset_name override the values in oxford_qt64.yaml
+       (params set after a rosparam load win). save_path must already exist.
+
        When the feeder finishes, Ctrl-C THIS node to trigger mesh saving
-       (p.ply / np.ply / all.ply under ptcl_save_path/dataset_name_<time>/). -->
+       (p.ply / np.ply / all.ply under save_path/dataset_name_<time>/). -->
 
     <arg name="rviz" default="false" />
+    <arg name="save_path" default="/indoormapping/oxford_spires/keble-college/output_onlinemesh/" />
+    <arg name="dataset_name" default="oxford_kc03" />
 
     <rosparam command="load" file="$(find online_mesh)/config/oxford_qt64.yaml" />
+    <param name="mesh/ptcl_save_path" value="$(arg save_path)" />
+    <param name="mesh/dataset_name" value="$(arg dataset_name)" />
 
     <node pkg="online_mesh" type="my_mesh" name="my_mesh" output="screen"/>
 
